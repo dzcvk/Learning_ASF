@@ -33,12 +33,13 @@
 #define LED IOPORT_CREATE_PIN(PIOB,27)
 
 void LED_Init(void);
-void WDT_Init(void);
+void setwdt(double secs);
+void reloadwdt(void);
 
 int main (void)
 {
 	/* Insert system clock initialization code here (sysclk_init()). */
-	WDT_Init();
+	setwdt(2);
 	ioport_init();
 	LED_Init();
 	/* Insert application code here, after the board has been initialized. */
@@ -56,7 +57,15 @@ void LED_Init(void)
 	ioport_set_pin_level(LED, IOPORT_PIN_LEVEL_HIGH);
 }
 
-void WDT_Init(void)
+void setwdt(double secs)
 {
-	REG_WDT_MR = WDT_MR_WDD(100)|WDT_MR_WDV(100);
+	int value;
+	value = (int)(secs*(32768/128));
+	
+	REG_WDT_MR = WDT_MR_WDD(value)|WDT_MR_WDV(value);
+}
+
+void reloadwdt(void)
+{
+	REG_WDT_CR = WDT_CR_KEY(0xa5)|WDT_CR_WDRSTT;
 }
