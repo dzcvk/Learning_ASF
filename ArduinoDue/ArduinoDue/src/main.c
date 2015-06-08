@@ -33,21 +33,17 @@
 #define LED IOPORT_CREATE_PIN(PIOB,27)
 
 void LED_Init(void);
-void setwdt(double secs);
 void reloadwdt(void);
+void initwdt(double secs);
 
 int main (void)
 {
 	/* Insert system clock initialization code here (sysclk_init()). */
-	setwdt(2);
+	initwdt(0.5);
 	ioport_init();
 	LED_Init();
 	/* Insert application code here, after the board has been initialized. */
-	while(1)
-	{
-		ioport_toggle_pin_level(LED);
-		while(!(REG_WDT_SR&WDT_SR_WDUNF));
-	}
+	while(1);
 }
 
 
@@ -57,15 +53,22 @@ void LED_Init(void)
 	ioport_set_pin_level(LED, IOPORT_PIN_LEVEL_HIGH);
 }
 
-void setwdt(double secs)
-{
-	int value;
-	value = (int)(secs*(32768/128));
-	
-	REG_WDT_MR = WDT_MR_WDD(value)|WDT_MR_WDV(value);
-}
 
 void reloadwdt(void)
 {
-	REG_WDT_CR = WDT_CR_KEY(0xa5)|WDT_CR_WDRSTT;
+	REG_WDT_CR = WDT_CR_KEY(0xa5)|WDT_CR_WDRSTT;	//setting key and restart watchdog
+}
+
+void initwdt(double secs)
+{
+	uint value;
+	value = (int)(secs*(32768/128));
+	NVIC_EnableIRQ(WDT_IRQn);		//enable watchdog interrupt in NVIC
+	REG_WDT_MR = WDT_MR_WDD(value)|WDT_MR_WDV(value)|WDT_MR_WDFIEN;	//setting feeding underflow period and enable sending watchdog interrupt request to NVIC
+}
+
+void WDT_Handler()
+{
+	uint value = REG_WDT_SR;	//without this line, interrupt will not be cleared
+	ioport_toggle_pin_level(LED);
 }
