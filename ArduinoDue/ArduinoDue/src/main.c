@@ -38,19 +38,14 @@ void WDT_Init(void);
 int main (void)
 {
 	/* Insert system clock initialization code here (sysclk_init()). */
-	board_init();
-	sysclk_init();
-	//delay_init(sysclk_get_cpu_hz());
+	WDT_Init();
 	ioport_init();
 	LED_Init();
-	WDT_Init();
-
 	/* Insert application code here, after the board has been initialized. */
 	while(1)
 	{
 		ioport_toggle_pin_level(LED);
-		delay_ms(1000);
-		//while(!(REG_WDT_SR&WDT_SR_WDUNF));
+		while(!(REG_WDT_SR&WDT_SR_WDUNF));
 	}
 }
 
@@ -63,7 +58,5 @@ void LED_Init(void)
 
 void WDT_Init(void)
 {
-	REG_WDT_CR = WDT_CR_KEY(0xa5)|WDT_CR_WDRSTT;
-	//REG_WDT_MR = 0b00000010000000000010001000000000;
-	REG_WDT_MR = WDT_MR_WDD(500)|WDT_MR_WDRSTEN|WDT_MR_WDV(500);
+	REG_WDT_MR = WDT_MR_WDD(100)|WDT_MR_WDV(100);
 }
