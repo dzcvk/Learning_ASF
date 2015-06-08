@@ -39,7 +39,7 @@ void initwdt(double secs);
 int main (void)
 {
 	/* Insert system clock initialization code here (sysclk_init()). */
-	initwdt(0.5);
+	initwdt(1);
 	ioport_init();
 	LED_Init();
 	/* Insert application code here, after the board has been initialized. */
@@ -69,6 +69,49 @@ void initwdt(double secs)
 
 void WDT_Handler()
 {
+	enum{GREEN, AMBER, RED};
 	uint value = REG_WDT_SR;	//without this line, interrupt will not be cleared
-	ioport_toggle_pin_level(LED);
+	static uint state  = GREEN;
+	static uint counter = 0;
+
+	switch(state)
+	{
+		case GREEN:
+		{
+			counter++;
+			if(counter == 5)
+			{
+				state = AMBER;
+				//AMBER light
+				ioport_set_pin_level(LED,LOW);
+				counter = 0;
+			}
+			break;
+		}
+		case AMBER:
+		{
+			counter++;
+			if(counter == 1)
+			{
+				state = RED;
+				//RED light
+				ioport_set_pin_level(LED,HIGH);
+				counter = 0;
+			}
+			break;
+		}
+		case RED:
+		{
+			counter++;
+			if(counter == 3)
+			{
+				state = GREEN;
+				//GREEN light
+				ioport_set_pin_level(LED,HIGH);
+				counter = 0;
+			}
+			break;
+		}
+	}
+	//ioport_toggle_pin_level(LED);
 }
